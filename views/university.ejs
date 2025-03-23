@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        <%= title %>
+    </title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+</head>
+
+
+
+
+<body>
+    <h1>
+        <%= title %>
+    </h1>
+    <p>Welcome to <%= title %>
+    </p>
+    <button onclick="getAllData()">get All data</button><br><br>
+    <!--test get uni -->
+    <input type="text" name="countryname" id="countryname">
+    <button type="button" onclick="showbyCountry()">Show By Country</button><br>
+    <button type="button" onclick="countByCountry()">Count By Country</button>
+
+    <!--canvas-->
+    <canvas id="countryChart" width="800" height="400"></canvas>
+    <button onClick="drawCountryBarChart()">Draw Country Chart</button>
+
+</body>
+
+<script>
+
+    //since we will need for filtering we write a client side function which returns raw data from server
+
+    async function getAllData() {
+        try {
+            const url = "http://localhost:3000/university/getuniversities"
+            const response = await fetch(url);
+            const data = await response.json()
+            console.log(data);
+            return data;
+
+        } catch (error) {
+            console.error("error", error)
+            return error;
+        }
+
+    }
+    //this show filterbycountry
+    async function showbyCountry() {
+        const countryName = document.getElementById("countryname").value;
+        console.log("country", countryName);
+        try {
+            const dataByCountry = await filterByCountry(countryName);
+            console.log(dataByCountry);
+        } catch (error) {
+            console.log("error", error)
+        }
+    }
+
+    //filter by country 
+    async function filterByCountry(countryName) {
+
+        try {
+            const dataSource = await getAllData();
+            const filtered = dataSource.filter(item => item.country && item.country.toLowerCase().trim() == countryName.toLowerCase().trim());
+            console.log(`Universities in ${countryName}, filtered`)
+            //return 
+            return filtered;
+        } catch (error) {
+            console.error("ERror", error);
+            return [];
+        }
+
+    }
+
+    //count uni by Country 
+    async function countByCountry() {
+        //we create an empty object
+        let countryStats = {}
+        try {
+            const dataSource = await getAllData();
+
+            dataSource.forEach(item => {
+                const country = item.country?.trim(); //check if it has country 
+
+                if (country) {
+                    if (countryStats[country]) {
+                        countryStats[country] += 1;
+                    } else {
+                        countryStats[country] = 1;
+                    }
+
+                }
+            });
+            console.log("university count by country:", countryStats);
+            //for graphic export 
+            return countryStats;
+
+
+        } catch (error) {
+            console.error("error", error)
+        }
+    }
+
+    async function drawCountryBarChart() {
+        const countryStats = await countByCountry();
+
+        // Convert to array and sort by count (descending)
+        const sorted = Object.entries(countryStats).sort((a, b) => b[1] - a[1]);
+
+        // Take top 10 countries
+        const topCountries = sorted.slice(0, 10);
+
+        const labels = topCountries.map(entry => entry[0]);
+        const data = topCountries.map(entry => entry[1]);
+
+        const ctx = document.getElementById('countryChart').getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Universities per Country',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+
+
+</script>
+
+</html>
