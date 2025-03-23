@@ -26,7 +26,8 @@
     <button type="button" onclick="countByCountry()">Count By Country</button>
 
     <!--canvas-->
-    <canvas id="countryChart" width="800" height="400"></canvas>
+    <canvas id="countryChart" style="max-width: 100%; height: 500px;"></canvas>
+
     <button onClick="drawCountryBarChart()">Draw Country Chart</button>
 
 </body>
@@ -106,42 +107,46 @@
         }
     }
 
-    async function drawCountryBarChart() {
-        const countryStats = await countByCountry();
 
-        // Convert to array and sort by count (descending)
-        const sorted = Object.entries(countryStats).sort((a, b) => b[1] - a[1]);
 
-        // Take top 10 countries
-        const topCountries = sorted.slice(0, 10);
+    let chartInstance;
 
-        const labels = topCountries.map(entry => entry[0]);
-        const data = topCountries.map(entry => entry[1]);
+        async function drawCountryBarChart() {
+            const countryStats = await countByCountry();
+            const sorted = Object.entries(countryStats).sort((a, b) => b[1] - a[1]);
+            const topCountries = sorted.slice(0, 10);
+            const labels = topCountries.map(entry => entry[0]);
+            const data = topCountries.map(entry => entry[1]);
 
-        const ctx = document.getElementById('countryChart').getContext('2d');
+            const ctx = document.getElementById('countryChart').getContext('2d');
 
-        const chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Number of Universities per Country',
-                    data: data,
-                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
+            // Destroy previous chart if it exists
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Universities per Country',
+                        data: data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
 
 
